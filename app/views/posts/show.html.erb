@@ -1,0 +1,36 @@
+<div class="page">
+  <header class="page-header">
+    <div class="header-content">
+      <h1><%= @post.title %></h1>
+      <div class="post-meta-info">
+        <span class="category-badge"><%= @post.category_label %></span>
+        <span class="post-date">📅 <%= @post.post_date.strftime("%B %d, %Y") %></span>
+      </div>
+    </div>
+    <div class="show-actions">
+      <%= link_to "📝 수정", edit_post_path(@post), class: "btn-primary" %>
+      <%= link_to "← 목록", posts_path, class: "btn-secondary" %>
+    </div>
+  </header>
+
+  <article class="post-show">
+    <% if @post.images.attached? %>
+      <div class="post-images-container">
+        <div class="post-images-gallery">
+          <% @post.images.each_with_index do |image, index| %>
+            <div class="gallery-item">
+              <%= image_tag image, alt: "Image #{index + 1}", class: "gallery-img" %>
+            </div>
+          <% end %>
+        </div>
+      </div>
+    <% elsif @post.image.attached? %>
+      <div class="post-image-container">
+        <%= image_tag @post.image, alt: @post.title, class: "post-image" %>
+      </div>
+    <% end %>
+    <div class="post-content">
+      <%= simple_format(@post.body) %>
+    </div>
+  </article>
+</div>

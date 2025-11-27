@@ -1,0 +1,27 @@
+services:
+  web:
+    image: ruby:3.3
+    working_dir: /app
+    volumes:
+      - .:/app
+    ports:
+      - "3000:3000"
+    depends_on:
+      - db
+    environment:
+      DATABASE_URL: postgres://postgres:postgres@db:5432/rails_dev
+    command: bash -lc "gem install rails -v 8.1.1 && bundle install && ./bin/rails s -b 0.0.0.0"
+
+  db:
+    image: postgres:16
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: rails_dev
+    ports:
+      - "5433:5432"   # 로컬에서 접속하려면 5433으로
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+
+volumes:
+  pg_data:

@@ -1,0 +1,67 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Rails Server",
+      "type": "shell",
+      "command": "cd ${workspaceFolder} && docker-compose up",
+      "isBackground": true,
+      "problemMatcher": {
+        "pattern": {
+          "regexp": "^.*$",
+          "file": 1,
+          "location": 2,
+          "message": 3
+        },
+        "background": {
+          "activeOnStart": true,
+          "beginsPattern": "Puma starting",
+          "endsPattern": "Listening on"
+        }
+      },
+      "presentation": {
+        "reveal": "always",
+        "panel": "new"
+      }
+    },
+    {
+      "label": "Rails Logs (Docker)",
+      "type": "shell",
+      "command": "docker logs -f rails8app-web-1",
+      "isBackground": true,
+      "problemMatcher": [],
+      "presentation": {
+        "reveal": "always",
+        "panel": "new"
+      }
+    },
+    {
+      "label": "Rails DB Migrate",
+      "type": "shell",
+      "command": "cd ${workspaceFolder} && docker exec rails8app-web-1 bundle exec rake db:migrate",
+      "presentation": {
+        "reveal": "always"
+      }
+    },
+    {
+      "label": "Rails Console",
+      "type": "shell",
+      "command": "docker exec -it rails8app-web-1 bundle exec rails console",
+      "isBackground": false,
+      "presentation": {
+        "reveal": "always",
+        "panel": "new"
+      }
+    },
+    {
+      "label": "Container Logs - Web",
+      "type": "shell",
+      "command": "docker logs -f rails8app-web-1 2>&1",
+      "isBackground": true,
+      "presentation": {
+        "reveal": "always",
+        "panel": "new"
+      }
+    }
+  ]
+}

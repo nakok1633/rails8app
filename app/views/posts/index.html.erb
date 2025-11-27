@@ -1,0 +1,265 @@
+<div class="page">
+  <header class="page-header">
+    <div class="header-content">
+      <h1>✨ 일기장</h1>
+      <p class="subtitle">오늘의 순간들</p>
+    </div>
+    <%= link_to "✏️ 새 글", new_post_path, class: "btn-primary" %>
+  </header>
+
+  <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 12px; flex: 1; overflow: hidden; min-height: 0;">
+    <!-- Left Side: Calendar -->
+    <div style="display: flex; flex-direction: column; overflow: hidden; min-height: 0;">
+      <!-- Calendar Navigation -->
+      <div class="calendar-nav" style="flex-shrink: 0;">
+        <div class="nav-controls">
+          <%= link_to "◀", posts_path(year: (@current_date.prev_month).year, month: (@current_date.prev_month).month), class: "nav-btn" %>
+          <h2 class="current-month"><%= @current_date.strftime("%Y년 %m월") %></h2>
+          <%= link_to "▶", posts_path(year: (@current_date.next_month).year, month: (@current_date.next_month).month), class: "nav-btn" %>
+        </div>
+        <%= link_to "오늘", posts_path(year: Date.today.year, month: Date.today.month), class: "btn-today" %>
+      </div>
+
+      <!-- Calendar Grid -->
+      <div class="calendar-container" style="flex: 1; min-height: 0;">
+        <div class="calendar-header">
+          <div class="calendar-day-name">일</div>
+          <div class="calendar-day-name">월</div>
+          <div class="calendar-day-name">화</div>
+          <div class="calendar-day-name">수</div>
+          <div class="calendar-day-name">목</div>
+          <div class="calendar-day-name">금</div>
+          <div class="calendar-day-name">토</div>
+        </div>
+
+        <div class="calendar-grid" style="flex: 1; overflow: hidden;">
+          <% 
+            start_date = @current_date
+            end_date = @current_date.end_of_month
+            start_wday = start_date.wday
+            
+            # 이전 달의 날짜로 채우기
+            prev_month_end = @current_date.prev_day
+            (start_wday).times do |i|
+              day = prev_month_end - (start_wday - i - 1)
+          %>
+            <div class="calendar-cell other-month">
+              <div class="day-number"><%= day.day %></div>
+            </div>
+          <% end %>
+
+          <% (start_date..end_date).each do |date| %>
+            <div class="calendar-cell <%= 'today' if date == Date.today %>" 
+                 data-date="<%= date.strftime('%Y-%m-%d') %>"
+                 ondblclick="handleDateDoubleClick(this, '<%= date.strftime('%Y-%m-%d') %>')">
+              <div class="day-number"><%= date.day %></div>
+              <div class="day-posts">
+                <% if @posts_by_date[date].present? %>
+                  <% @posts_by_date[date].each do |post| %>
+                    <%= link_to post.title, post, class: "post-link", title: post.title %>
+                  <% end %>
+                <% end %>
+              </div>
+            </div>
+          <% end %>
+
+          <% 
+            # 다음 달의 날짜로 채우기
+            remaining = 42 - (start_wday + (end_date - start_date + 1).to_i)
+            (1..remaining).each do |day|
+          %>
+            <div class="calendar-cell other-month">
+              <div class="day-number"><%= day %></div>
+            </div>
+          <% end %>
+        </div>
+      </div>
+    </div>
+
+    <!-- Right Side: Statistics & Recent Posts -->
+    <div style="display: flex; flex-direction: column; gap: 8px; overflow: hidden; height: 100%;">
+      <% if @posts.any? %>
+        <!-- Statistics -->
+        <div class="posts-list-section" style="flex-shrink: 0; padding: 10px;">
+          <h3 style="margin: 0 0 6px 0; font-size: 14px; font-weight: 700;">📊 통계</h3>
+          <div style="display: flex; flex-direction: column; gap: 8px;">
+            <div style="width: 100%; display: flex; justify-content: center;">
+              <canvas id="categoryChart" width="120" height="120"></canvas>
+            </div>
+            <div style="display: flex; flex-direction: column; gap: 3px; font-size: 11px;">
+              <% @category_labels.each_with_index do |label, index| %>
+                <div style="display: flex; align-items: center; gap: 3px; padding: 2px 0;">
+                  <div style="width: 10px; height: 10px; border-radius: 2px; background-color: <%= get_category_color(index) %>; flex-shrink: 0;"></div>
+                  <span style="color: #1f2937; font-weight: 600; flex: 1; min-width: 0;"><%= label %></span>
+                  <span style="color: #9ca3af; font-weight: 700; flex-shrink: 0;"><%= @category_data[index] %></span>
+                </div>
+              <% end %>
+            </div>
+          </div>
+        </div>
+
+        <!-- Month Stats -->
+        <div class="posts-list-section" style="flex-shrink: 0; padding: 10px;">
+          <h3 style="margin: 0 0 6px 0; font-size: 14px; font-weight: 700;">📈 이달</h3>
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; font-size: 12px;">
+            <div style="background: #f0f4ff; padding: 8px; border-radius: 6px; border-left: 3px solid #667eea;">
+              <div style="color: #9ca3af; margin-bottom: 2px; font-size: 11px;">총 글</div>
+              <div style="font-size: 20px; font-weight: 700; color: #667eea;"><%= @posts.count %></div>
+            </div>
+            <div style="background: #fff0f4; padding: 8px; border-radius: 6px; border-left: 3px solid #f093fb;">
+              <div style="color: #9ca3af; margin-bottom: 2px; font-size: 11px;">평균</div>
+              <div style="font-size: 20px; font-weight: 700; color: #f093fb;"><%= (@posts.count.to_f / (@current_date.end_of_month.day)).round(1) %></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Recent Posts List -->
+        <div class="posts-list-section" style="overflow-y: auto; flex: 1; min-height: 0; padding: 10px;">
+          <h3 style="margin: 0 0 6px 0; font-size: 14px; font-weight: 700; position: sticky; top: 0; background: white; z-index: 10;">📝 최근</h3>
+          <div style="display: flex; flex-direction: column; gap: 5px;">
+            <% @posts.each do |post| %>
+              <div style="padding: 5px; background: #f9fafb; border-radius: 5px; border-left: 2px solid <%= get_category_color(Post::CATEGORIES.values.index(post.category)) %>; flex-shrink: 0;">
+                <div style="font-size: 11px; font-weight: 600; color: #1f2937; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                  <%= link_to post.title, post, style: "color: #667eea; text-decoration: none;" %>
+                </div>
+                <div style="font-size: 10px; color: #9ca3af; margin-top: 2px;">
+                  <%= post.post_date.strftime("%m/%d") %> · <%= post.category_label %>
+                </div>
+              </div>
+            <% end %>
+          </div>
+        </div>
+      <% else %>
+        <div class="posts-list-section" style="text-align: center;">
+          <p style="margin: 0; font-size: 12px; color: #9ca3af;">📝 아직 글이 없습니다</p>
+        </div>
+      <% end %>
+    </div>
+  </div>
+</div>
+
+<script>
+  let categoryChartInstance = null;
+
+  function handleDateDoubleClick(element, dateStr) {
+    // 게시물이 없는 경우에만 새 글 작성으로 이동
+    const dayPosts = element.querySelector('.day-posts');
+    if (dayPosts && dayPosts.children.length === 0) {
+      // 클릭 피드백
+      element.style.transform = 'scale(0.95)';
+      setTimeout(() => {
+        window.location.href = '<%= new_post_path %>?post_date=' + dateStr;
+      }, 100);
+    }
+  }
+
+  // 카테고리 차트 초기화
+  function initChart() {
+    // 약간의 지연을 주어 DOM이 완전히 렌더링되도록 함
+    setTimeout(function() {
+      const categoryChart = document.getElementById('categoryChart');
+      if (!categoryChart) {
+        console.warn('categoryChart element not found');
+        return;
+      }
+
+      // 기존 차트 인스턴스 제거
+      if (categoryChartInstance) {
+        categoryChartInstance.destroy();
+        categoryChartInstance = null;
+      }
+
+      const colors = [
+        '#667eea', '#764ba2', '#f093fb', '#4facfe',
+        '#00f2fe', '#43e97b', '#fa709a', '#fee140',
+        '#a8edea', '#fed6e3'
+      ];
+
+      const chartData = <%= raw @category_data.to_json %>;
+      const chartLabels = <%= raw @category_labels.to_json %>;
+
+      console.log('Chart Data:', chartData);
+      console.log('Chart Labels:', chartLabels);
+
+      if (!chartData || chartData.length === 0) {
+        console.warn('No chart data available');
+        return;
+      }
+
+      if (typeof Chart === 'undefined') {
+        console.error('Chart.js library not loaded');
+        return;
+      }
+
+      const ctx = categoryChart.getContext('2d');
+      categoryChartInstance = new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+          labels: chartLabels,
+          datasets: [{
+            data: chartData,
+            backgroundColor: colors.slice(0, chartLabels.length),
+            borderColor: '#ffffff',
+            borderWidth: 2
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: true,
+          plugins: {
+            legend: {
+              position: 'bottom',
+              labels: {
+                font: {
+                  size: 12,
+                  family: "-apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto'"
+                },
+                padding: 15,
+                usePointStyle: true
+              }
+            }
+          }
+        }
+      });
+      console.log('Chart initialized successfully');
+    }, 100);
+  }
+
+  // 페이지 로드 시
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initChart);
+  } else {
+    initChart();
+  }
+
+  // Turbo 라이브러리 지원 (Rails 8 기본값)
+  document.addEventListener('turbo:load', function() {
+    console.log('Turbo load event triggered');
+    initChart();
+  });
+
+  document.addEventListener('turbo:render', function() {
+    console.log('Turbo render event triggered');
+    initChart();
+  });
+
+  // Stimulus 라이브러리가 있으면 사용
+  document.addEventListener('stimulus:load', function() {
+    console.log('Stimulus load event triggered');
+    initChart();
+  });
+
+  // 화면 크기 변경 감지 (개발자 도구에서 기종 전환 등)
+  window.addEventListener('resize', function() {
+    console.log('Window resized, reinitializing chart');
+    initChart();
+  });
+
+  // Orientation 변경 감지 (모바일)
+  window.addEventListener('orientationchange', function() {
+    console.log('Orientation changed, reinitializing chart');
+    setTimeout(() => {
+      initChart();
+    }, 100);
+  });
+</script>

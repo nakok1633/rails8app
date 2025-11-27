@@ -1,0 +1,172 @@
+<%= form_with(model: post, local: true) do |form| %>
+  <% if post.errors.any? %>
+    <div class="form-error">
+      <h3>⚠️ <%= pluralize(post.errors.count, "오류") %>가 발생했습니다:</h3>
+      <ul>
+        <% post.errors.each do |error| %>
+          <li><%= error.full_message %></li>
+        <% end %>
+      </ul>
+    </div>
+  <% end %>
+
+  <div class="form-group">
+    <%= form.label :title, "제목" %>
+    <%= form.text_field :title, class: "form-input", placeholder: "글의 제목을 입력하세요" %>
+  </div>
+
+  <div class="form-group">
+    <%= form.label :post_date, "날짜" %>
+    <%= form.date_field :post_date, class: "form-input", required: true %>
+  </div>
+
+  <div class="form-group">
+    <%= form.label :category, "카테고리" %>
+    <div class="category-select">
+      <%= form.select :category, Post::CATEGORIES.map { |label, value| [label, value] }, 
+          { prompt: "카테고리를 선택하세요" }, 
+          class: "form-select" %>
+    </div>
+  </div>
+
+  <div class="form-group">
+    <%= form.label :images, "이미지 업로드 (여러 개 가능)" %>
+    <div class="image-upload" id="imageUpload">
+      <input type="file" id="imageInput" class="form-file-input" accept="image/*" multiple />
+      <%= form.file_field :images, class: "form-file-input", accept: "image/*", multiple: true, style: "display: none;" %>
+      <span class="file-hint">이미지를 선택하거나 드래그하세요 (JPG, PNG, GIF - 최대 5MB)</span>
+      <div id="previewContainer" class="preview-container"></div>
+    </div>
+    <% if post.images.attached? %>
+      <div class="image-preview-section" id="existingPreview">
+        <h4>📸 업로드된 이미지</h4>
+        <div class="existing-images">
+          <% post.images.each_with_index do |image, index| %>
+            <div class="existing-image-item">
+              <%= image_tag image, alt: "Image #{index + 1}", class: "existing-preview-img" %>
+              <button type="button" class="remove-existing-btn" data-image-id="<%= image.id %>">✕</button>
+            </div>
+          <% end %>
+        </div>
+      </div>
+    <% end %>
+  </div>
+
+  <div class="form-group">
+    <%= form.label :body, "내용" %>
+    <%= form.textarea :body, class: "form-textarea", placeholder: "오늘의 이야기를 자유롭게 작성해보세요...", rows: 12 %>
+  </div>
+
+  <div class="form-actions">
+    <%= form.submit "저장하기", class: "btn-submit" %>
+  </div>
+<% end %>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    const imageUpload = document.getElementById('imageUpload');
+    const imageInput = document.getElementById('imageInput');
+    const formFileInputs = document.querySelectorAll('input[type="file"][accept="image/*"][multiple]');
+    const formFileInput = formFileInputs.length > 0 ? formFileInputs[formFileInputs.length - 1] : null;
+    const previewContainer = document.getElementById('previewContainer');
+    
+    if (!formFileInput) {
+      console.error('Form file input not found');
+      return;
+    }
+
+    let selectedFiles = [];
+
+    // 파일 입력 변경 시 미리보기
+    function handleFileSelect(files) {
+      selectedFiles = Array.from(files);
+      previewContainer.innerHTML = '';
+      
+      selectedFiles.forEach((file, index) => {
+        if (file.type.startsWith('image/')) {
+          const reader = new FileReader();
+          
+          reader.onload = function(e) {
+            const preview = document.createElement('div');
+            preview.className = 'preview-item';
+            preview.innerHTML = `
+              <div class="preview-thumbnail">
+                <img src="${e.target.result}" alt="Preview" class="preview-img">
+                <button type="button" class="remove-btn" data-index="${index}">✕</button>
+              </div>
+            `;
+            previewContainer.appendChild(preview);
+            
+            // 제거 버튼
+            preview.querySelector('.remove-btn').addEventListener('click', function(e) {
+              e.preventDefault();
+              selectedFiles.splice(index, 1);
+              preview.remove();
+              updateFileInput();
+            });
+          };
+          
+          reader.readAsDataURL(file);
+        }
+      });
+      
+      updateFileInput();
+    }
+
+    // 파일 입력 업데이트
+    function updateFileInput() {
+      const dataTransfer = new DataTransfer();
+      selectedFiles.forEach(file => dataTransfer.items.add(file));
+      imageInput.files = dataTransfer.files;
+      if (formFileInput) {
+        formFileInput.files = dataTransfer.files;
+      }
+    }
+
+    // 클릭으로 파일 선택
+    imageUpload.addEventListener('click', function(e) {
+      if (e.target !== imageInput && !e.target.closest('.remove-btn')) {
+        imageInput.click();
+      }
+    });
+
+    // 파일 입력 변경
+    imageInput.addEventListener('change', function(e) {
+      if (this.files.length > 0) {
+        handleFileSelect(this.files);
+      }
+    });
+
+    // 드래그 앤 드롭
+    imageUpload.addEventListener('dragover', function(e) {
+      e.preventDefault();
+      e.stopPropagation();
+      imageUpload.classList.add('drag-over');
+    });
+
+    imageUpload.addEventListener('dragleave', function(e) {
+      e.preventDefault();
+      e.stopPropagation();
+      imageUpload.classList.remove('drag-over');
+    });
+
+    imageUpload.addEventListener('drop', function(e) {
+      e.preventDefault();
+      e.stopPropagation();
+      imageUpload.classList.remove('drag-over');
+      
+      if (e.dataTransfer.files.length > 0) {
+        handleFileSelect(e.dataTransfer.files);
+      }
+    });
+
+    // 기존 이미지 제거 버튼
+    document.querySelectorAll('.remove-existing-btn').forEach(btn => {
+      btn.addEventListener('click', function(e) {
+        e.preventDefault();
+        const imageId = this.dataset.imageId;
+        this.closest('.existing-image-item').remove();
+      });
+    });
+  });
+</script>

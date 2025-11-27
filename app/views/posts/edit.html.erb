@@ -1,0 +1,19 @@
+<% content_for :title, "Editing post" %>
+
+<div class="page">
+  <header class="page-header">
+    <div class="header-content">
+      <h1>📝 글 수정</h1>
+      <p class="subtitle">지난 순간을 다시 정리해보세요</p>
+    </div>
+  </header>
+
+  <div class="form-card">
+    <%= render "form", post: @post %>
+  </div>
+
+  <div class="form-footer">
+    <%= link_to "👁️ 미리보기", @post, class: "btn-secondary" %>
+    <%= link_to "← 목록으로", posts_path, class: "btn-secondary" %>
+  </div>
+</div>

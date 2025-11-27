@@ -1,0 +1,26 @@
+<% content_for :title, "New post" %>
+
+<div class="page">
+  <header class="page-header">
+    <div class="header-content">
+      <h1>✨ 새 글 작성</h1>
+      <p class="subtitle">오늘의 소중한 순간을 기록하세요</p>
+    </div>
+  </header>
+
+  <div class="form-card">
+    <% 
+      # URL 파라미터에서 post_date 설정
+      if params[:post_date].present?
+        @post.post_date = Date.parse(params[:post_date])
+      elsif @post.post_date.blank?
+        @post.post_date = Date.today
+      end
+    %>
+    <%= render "form", post: @post %>
+  </div>
+
+  <div class="form-footer">
+    <%= link_to "← 목록으로 돌아가기", posts_path, class: "btn-secondary" %>
+  </div>
+</div>

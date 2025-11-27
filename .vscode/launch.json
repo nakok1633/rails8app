@@ -1,0 +1,41 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Rails Server (Docker)",
+      "type": "Ruby",
+      "request": "launch",
+      "cwd": "${workspaceFolder}",
+      "program": "${workspaceFolder}/bin/rails",
+      "args": ["server", "-b", "0.0.0.0"],
+      "showDebugOutput": true,
+      "pathMappings": [
+        {
+          "localRoot": "${workspaceFolder}",
+          "remoteRoot": "/app"
+        }
+      ]
+    },
+    {
+      "name": "Rails Console",
+      "type": "Ruby",
+      "request": "launch",
+      "cwd": "${workspaceFolder}",
+      "program": "${workspaceFolder}/bin/rails",
+      "args": ["console"],
+      "showDebugOutput": true
+    },
+    {
+      "name": "Docker Logs - Rails",
+      "type": "node",
+      "request": "launch",
+      "program": "${workspaceFolder}/node_modules/.bin/node",
+      "args": [
+        "-e",
+        "require('child_process').spawn('docker', ['logs', '-f', 'rails8app-web-1'], { stdio: 'inherit' })"
+      ],
+      "console": "integratedTerminal",
+      "skipFiles": ["<node_internals>/**"]
+    }
+  ]
+}
