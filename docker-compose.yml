@@ -10,7 +10,7 @@ services:
       - db
     environment:
       DATABASE_URL: postgres://postgres:postgres@db:5432/rails_dev
-    command: bash -lc "gem install rails -v 8.1.1 && bundle install && ./bin/rails s -b 0.0.0.0"
+    #command: bash -lc "gem install rails -v 8.1.1 && bundle install && ./bin/rails s -b 0.0.0.0"
 
   db:
     image: postgres:16

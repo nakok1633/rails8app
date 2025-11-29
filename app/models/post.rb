@@ -22,4 +22,6 @@ class Post < ApplicationRecord
   def category_label
     CATEGORIES.key(category) || CATEGORIES['✨ 일반']
   end
+
+  belongs_to :user
 end

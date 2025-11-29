@@ -4,4 +4,7 @@ class ApplicationController < ActionController::Base
 
   # Changes to the importmap will invalidate the etag for HTML responses
   stale_when_importmap_changes
+
+  # 로그인 인증
+  before_action :authenticate_user!
 end
